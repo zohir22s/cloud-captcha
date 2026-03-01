@@ -489,7 +489,7 @@
 
             try {
                 console.log('Checking server connection...');
-                const response = await fetch(`${API_BASE_URL}/test`);
+                const response = await fetchWithAuth(`${API_BASE_URL}/test`);
 
                 if (response.ok) {
                     const data = await response.json();
@@ -542,12 +542,10 @@
 
             try {
                 console.log('Verifying captcha:', value);
-                const response = await fetch(`${API_BASE_URL}/verify`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ captcha: value })
+                const response = await fetchWithAuth(`${API_BASE_URL}/verify`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ captcha: value })
                 });
 
                 if (!response.ok) {
@@ -588,7 +586,7 @@
 
             try {
                 console.log('Fetching new captcha...');
-                const response = await fetch(`${API_BASE_URL}/captcha`);
+                const response = await fetchWithAuth(`${API_BASE_URL}/captcha`);
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);

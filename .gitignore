@@ -1,0 +1,30 @@
+# Environment variables
+.env
+*.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+myfirstproject/
+venv/
+env/
+ENV/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Captcha images
+static/captcha.png
+
+# Secret files
+*.key
+*.pem
+secrets/
