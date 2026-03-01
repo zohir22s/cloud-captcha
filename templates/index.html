@@ -3,7 +3,7 @@
 
 <head>
     <title>Captcha Cloud Lab</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
         /* Additional styles that complement style.css */
         body {
@@ -476,7 +476,8 @@
     </div>
 
     <script>
-        const API_BASE_URL = 'http://localhost:5000';
+        // Use the current origin instead of hardcoded localhost
+        const API_BASE_URL = window.location.origin;
 
         // Check server connection on page load
         async function checkServerConnection() {
@@ -519,7 +520,7 @@
                 verifyBtn.disabled = true;
                 captchaInput.disabled = true;
 
-                resultEl.innerHTML = '<div class="error-message">❌ CANNOT CONNECT TO SERVER<br><small>Make sure Flask is running on port 5000</small></div>';
+                resultEl.innerHTML = '<div class="error-message">❌ CANNOT CONNECT TO SERVER<br><small>Make sure Flask is running</small></div>';
                 return false;
             }
         }
@@ -530,7 +531,6 @@
             const value = input.value.trim();
 
             if (!value) {
-                // Use your styled button for alert? Can't easily style alert, so we'll show in result
                 document.getElementById("result").innerHTML = '<div class="error-message">❌ PLEASE ENTER CAPTCHA TEXT</div>';
                 return;
             }
@@ -560,17 +560,16 @@
                 if (data.status === "success") {
                     result.innerHTML = '<div class="success-message">✅ VERIFICATION SUCCESSFUL!</div>';
                     input.value = "";
-                    // Refresh after successful verification
                     setTimeout(refresh, 1500);
                 } else {
                     result.innerHTML = '<div class="error-message">❌ WRONG CAPTCHA. TRY AGAIN.</div>';
-                    refresh(); // Auto refresh new captcha if failed
+                    refresh();
                 }
             } catch (error) {
                 console.error("Verification error:", error);
                 document.getElementById("result").innerHTML =
                     '<div class="error-message">❌ ERROR CONNECTING TO SERVER</div>';
-                checkServerConnection(); // Recheck server connection
+                checkServerConnection();
             } finally {
                 verifyBtn.innerHTML = originalText;
                 verifyBtn.disabled = false;
@@ -583,7 +582,6 @@
             const refreshBtn = document.getElementById("refreshBtn");
             const originalText = refreshBtn.innerHTML;
 
-            // Show loading state
             refreshBtn.innerHTML = '<span>⏳ LOADING...</span>';
             refreshBtn.disabled = true;
             img.style.opacity = '0.5';
@@ -599,10 +597,8 @@
                 const data = await response.json();
                 console.log('Captcha text (for testing):', data.debug_text);
 
-                // Set the image
                 img.src = "data:image/png;base64," + data.image;
 
-                // Clear input and result
                 document.getElementById("captcha_input").value = "";
                 document.getElementById("result").innerHTML = "";
 
@@ -610,7 +606,7 @@
                 console.error("Refresh error:", error);
                 document.getElementById("result").innerHTML =
                     '<div class="error-message">❌ FAILED TO LOAD CAPTCHA</div>';
-                img.src = ""; // Clear image
+                img.src = "";
             } finally {
                 refreshBtn.innerHTML = originalText;
                 refreshBtn.disabled = false;
@@ -618,14 +614,12 @@
             }
         }
 
-        // Allow Enter key to submit
         document.getElementById('captcha_input').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 verify();
             }
         });
 
-        // Check server connection when page loads
         window.onload = checkServerConnection;
     </script>
 </body>

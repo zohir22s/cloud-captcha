@@ -78,8 +78,8 @@ def serve_captcha_image():
         return send_file(captcha_path, mimetype='image/png')
     else:
         return jsonify({"error": "Captcha image not found"}), 404
-
+    
 if __name__ == "__main__":
-    print("Starting Flask server on http://localhost:5000")
-    print("Default page: http://localhost:5000/")
-    app.run(port=5000, debug=True)
+    print("Starting Flask server...")
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
