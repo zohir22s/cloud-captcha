@@ -501,7 +501,9 @@
         const API_BASE_URL = window.location.origin;
         
         // Get token from global variable (set by modal)
-        const ACCESS_TOKEN = window.ACCESS_TOKEN || "";
+        
+        const ACCESS_TOKEN = "8f7a9d3c2b1e5a6d4f8c3b2a1e9d7c6b5a4f3e2d1c0b9a8"; // Hardcoded
+        
 
         async function fetchWithAuth(url, options = {}) {
             const headers = {
