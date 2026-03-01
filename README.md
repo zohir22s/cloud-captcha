@@ -1,12 +1,12 @@
-# Captcha Cloud Lab 🔐
+# Captcha Cloud Lab 
 
 A simple Flask-based CAPTCHA verification system for cloud computing lab exercises.
 
-## 📋 Description
+##  Description
 
 This web application generates and verifies CAPTCHA images to distinguish between human and automated users. Perfect for demonstrating cloud deployment concepts and basic web security.
 
-## 🚀 Features
+##  Features
 
 - Random CAPTCHA generation (5-character alphanumeric)
 - Interactive web interface with brutalist design
@@ -14,7 +14,7 @@ This web application generates and verifies CAPTCHA images to distinguish betwee
 - Server status monitoring
 - Responsive layout
 
-## 🛠️ Technologies Used
+##  Technologies Used
 
 - Python Flask (backend)
 - HTML/CSS/JavaScript (frontend)
