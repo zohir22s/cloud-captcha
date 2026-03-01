@@ -441,7 +441,27 @@
 </head>
 
 <body>
-    <div id="serverStatus" class="server-status status-offline">
+    <!-- Add this right after <body> -->
+    <div id="tokenModal" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border: 4px solid black; box-shadow: 10px 10px 0 #BF40BF; z-index: 9999;">
+        <h3>Enter Access Token</h3>
+        <input type="text" id="tokenInput" placeholder="Enter token" style="padding: 10px; width: 100%; margin: 10px 0; border: 2px solid black;">
+        <button onclick="submitToken()" style="background: #BF40BF; color: white; padding: 10px 20px; border: none; cursor: pointer;">Submit</button>
+    </div>
+
+    <script>
+        function submitToken() {
+            const token = document.getElementById('tokenInput').value;
+            if(token) {
+             window.ACCESS_TOKEN = token;  // This sets the global variable
+                document.getElementById('tokenModal').style.display = 'none';
+                // Now start the app
+                checkServerConnection();
+            } else {
+                alert("Please enter a token");
+            }
+        }
+    </script>
+        <div id="serverStatus" class="server-status status-offline">
         ⚫ Checking server...
     </div>
 
@@ -476,160 +496,159 @@
     </div>
 
     <script>
-        
     const API_BASE_URL = window.location.origin;
-
-    const ACCESS_TOKEN = prompt("Enter access token:") || "default-insecure-token-change-me";
+    let ACCESS_TOKEN = ""; // Will be set by the modal
 
     async function fetchWithAuth(url, options = {}) {
         const headers = {
             'Authorization': `Bearer ${ACCESS_TOKEN}`,
-           ...options.headers
+            ...options.headers
         };
         return fetch(url, { ...options, headers });
     }
-        
-        // Check server connection on page load
-        async function checkServerConnection() {
-            const statusEl = document.getElementById('serverStatus');
-            const refreshBtn = document.getElementById('refreshBtn');
-            const verifyBtn = document.getElementById('verifyBtn');
-            const captchaInput = document.getElementById('captcha_input');
-            const resultEl = document.getElementById('result');
+    
+    // Check server connection on page load
+    async function checkServerConnection() {
+        const statusEl = document.getElementById('serverStatus');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const verifyBtn = document.getElementById('verifyBtn');
+        const captchaInput = document.getElementById('captcha_input');
+        const resultEl = document.getElementById('result');
 
-            try {
-                console.log('Checking server connection...');
-                const response = await fetchWithAuth(`${API_BASE_URL}/test`);
+        try {
+            console.log('Checking server connection...');
+            const response = await fetchWithAuth(`${API_BASE_URL}/test`);
 
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('Server response:', data);
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Server response:', data);
 
-                    statusEl.innerHTML = '🟢 SERVER: ONLINE';
-                    statusEl.className = 'server-status status-online';
+                statusEl.innerHTML = '🟢 SERVER: ONLINE';
+                statusEl.className = 'server-status status-online';
 
-                    // Enable controls
-                    refreshBtn.disabled = false;
-                    verifyBtn.disabled = false;
-                    captchaInput.disabled = false;
+                // Enable controls
+                refreshBtn.disabled = false;
+                verifyBtn.disabled = false;
+                captchaInput.disabled = false;
 
-                    // Load first captcha
-                    refresh();
-                    return true;
-                } else {
-                    throw new Error(`Server returned ${response.status}`);
-                }
-            } catch (error) {
-                console.error('Server connection error:', error);
-
-                statusEl.innerHTML = '🔴 SERVER: OFFLINE';
-                statusEl.className = 'server-status status-offline';
-
-                // Disable controls
-                refreshBtn.disabled = true;
-                verifyBtn.disabled = true;
-                captchaInput.disabled = true;
-
-                resultEl.innerHTML = '<div class="error-message">❌ CANNOT CONNECT TO SERVER<br><small>Make sure Flask is running</small></div>';
-                return false;
+                // Load first captcha
+                refresh();
+                return true;
+            } else {
+                throw new Error(`Server returned ${response.status}`);
             }
+        } catch (error) {
+            console.error('Server connection error:', error);
+
+            statusEl.innerHTML = '🔴 SERVER: OFFLINE';
+            statusEl.className = 'server-status status-offline';
+
+            // Disable controls
+            refreshBtn.disabled = true;
+            verifyBtn.disabled = true;
+            captchaInput.disabled = true;
+
+            resultEl.innerHTML = '<div class="error-message">❌ CANNOT CONNECT TO SERVER<br><small>Make sure Flask is running</small></div>';
+            return false;
+        }
+    }
+
+    // Verify captcha
+    async function verify() {
+        const input = document.getElementById("captcha_input");
+        const value = input.value.trim();
+
+        if (!value) {
+            document.getElementById("result").innerHTML = '<div class="error-message">❌ PLEASE ENTER CAPTCHA TEXT</div>';
+            return;
         }
 
-        // Verify captcha
-        async function verify() {
-            const input = document.getElementById("captcha_input");
-            const value = input.value.trim();
+        const verifyBtn = document.getElementById("verifyBtn");
+        const originalText = verifyBtn.innerHTML;
+        verifyBtn.innerHTML = '<span>⏳ VERIFYING...</span>';
+        verifyBtn.disabled = true;
 
-            if (!value) {
-                document.getElementById("result").innerHTML = '<div class="error-message">❌ PLEASE ENTER CAPTCHA TEXT</div>';
-                return;
-            }
-
-            const verifyBtn = document.getElementById("verifyBtn");
-            const originalText = verifyBtn.innerHTML;
-            verifyBtn.innerHTML = '<span>⏳ VERIFYING...</span>';
-            verifyBtn.disabled = true;
-
-            try {
-                console.log('Verifying captcha:', value);
-                const response = await fetchWithAuth(`${API_BASE_URL}/verify`, {
+        try {
+            console.log('Verifying captcha:', value);
+            const response = await fetchWithAuth(`${API_BASE_URL}/verify`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ captcha: value })
-                });
+            });
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const data = await response.json();
-                const result = document.getElementById("result");
-
-                if (data.status === "success") {
-                    result.innerHTML = '<div class="success-message">✅ VERIFICATION SUCCESSFUL!</div>';
-                    input.value = "";
-                    setTimeout(refresh, 1500);
-                } else {
-                    result.innerHTML = '<div class="error-message">❌ WRONG CAPTCHA. TRY AGAIN.</div>';
-                    refresh();
-                }
-            } catch (error) {
-                console.error("Verification error:", error);
-                document.getElementById("result").innerHTML =
-                    '<div class="error-message">❌ ERROR CONNECTING TO SERVER</div>';
-                checkServerConnection();
-            } finally {
-                verifyBtn.innerHTML = originalText;
-                verifyBtn.disabled = false;
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
+
+            const data = await response.json();
+            const result = document.getElementById("result");
+
+            if (data.status === "success") {
+                result.innerHTML = '<div class="success-message">✅ VERIFICATION SUCCESSFUL!</div>';
+                input.value = "";
+                setTimeout(refresh, 1500);
+            } else {
+                result.innerHTML = '<div class="error-message">❌ WRONG CAPTCHA. TRY AGAIN.</div>';
+                refresh();
+            }
+        } catch (error) {
+            console.error("Verification error:", error);
+            document.getElementById("result").innerHTML =
+                '<div class="error-message">❌ ERROR CONNECTING TO SERVER</div>';
+            checkServerConnection();
+        } finally {
+            verifyBtn.innerHTML = originalText;
+            verifyBtn.disabled = false;
         }
+    }
 
-        // Refresh captcha
-        async function refresh() {
-            const img = document.getElementById("captcha_image");
-            const refreshBtn = document.getElementById("refreshBtn");
-            const originalText = refreshBtn.innerHTML;
+    // Refresh captcha
+    async function refresh() {
+        const img = document.getElementById("captcha_image");
+        const refreshBtn = document.getElementById("refreshBtn");
+        const originalText = refreshBtn.innerHTML;
 
-            refreshBtn.innerHTML = '<span>⏳ LOADING...</span>';
-            refreshBtn.disabled = true;
-            img.style.opacity = '0.5';
+        refreshBtn.innerHTML = '<span>⏳ LOADING...</span>';
+        refreshBtn.disabled = true;
+        img.style.opacity = '0.5';
 
-            try {
-                console.log('Fetching new captcha...');
-                const response = await fetchWithAuth(`${API_BASE_URL}/captcha`);
+        try {
+            console.log('Fetching new captcha...');
+            const response = await fetchWithAuth(`${API_BASE_URL}/captcha`);
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const data = await response.json();
-                console.log('Captcha text (for testing):', data.debug_text);
-
-                img.src = "data:image/png;base64," + data.image;
-
-                document.getElementById("captcha_input").value = "";
-                document.getElementById("result").innerHTML = "";
-
-            } catch (error) {
-                console.error("Refresh error:", error);
-                document.getElementById("result").innerHTML =
-                    '<div class="error-message">❌ FAILED TO LOAD CAPTCHA</div>';
-                img.src = "";
-            } finally {
-                refreshBtn.innerHTML = originalText;
-                refreshBtn.disabled = false;
-                img.style.opacity = '1';
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
+
+            const data = await response.json();
+            console.log('Captcha text (for testing):', data.debug_text);
+
+            img.src = "data:image/png;base64," + data.image;
+
+            document.getElementById("captcha_input").value = "";
+            document.getElementById("result").innerHTML = "";
+
+        } catch (error) {
+            console.error("Refresh error:", error);
+            document.getElementById("result").innerHTML =
+                '<div class="error-message">❌ FAILED TO LOAD CAPTCHA</div>';
+            img.src = "";
+        } finally {
+            refreshBtn.innerHTML = originalText;
+            refreshBtn.disabled = false;
+            img.style.opacity = '1';
         }
+    }
 
-        document.getElementById('captcha_input').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                verify();
-            }
-        });
+    document.getElementById('captcha_input').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            verify();
+        }
+    });
 
-        window.onload = checkServerConnection;
-    </script>
+    // Don't auto-start - wait for token
+    // window.onload = checkServerConnection; // Comment this out
+</script>
 </body>
 
 </html> 
