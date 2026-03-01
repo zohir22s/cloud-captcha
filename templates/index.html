@@ -476,9 +476,19 @@
     </div>
 
     <script>
-        // Use the current origin instead of hardcoded localhost
-        const API_BASE_URL = window.location.origin;
+        
+    const API_BASE_URL = window.location.origin;
 
+    const ACCESS_TOKEN = prompt("Enter access token:") || "default-insecure-token-change-me";
+
+    async function fetchWithAuth(url, options = {}) {
+        const headers = {
+            'Authorization': `Bearer ${ACCESS_TOKEN}`,
+           ...options.headers
+        };
+        return fetch(url, { ...options, headers });
+    }
+        
         // Check server connection on page load
         async function checkServerConnection() {
             const statusEl = document.getElementById('serverStatus');
