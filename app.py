@@ -6,38 +6,11 @@ import string
 import base64
 import io
 import os
-from functools import wraps
 
 app = Flask(__name__)
 CORS(app)
 
 CURRENT_CAPTCHA = ""
-
-# Get access token from environment variable (set in Render Dashboard)
-ACCESS_TOKEN = os.environ.get('ACCESS_TOKEN', 'default-insecure-token-change-me')
-
-# Decorator to check authentication
-def require_token(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        auth_header = request.headers.get('Authorization')
-        
-        if not auth_header:
-            return jsonify({"error": "No authorization token provided"}), 401
-        
-        # Expected format: "Bearer <token>"
-        try:
-            token_type, token = auth_header.split()
-            if token_type.lower() != 'bearer':
-                return jsonify({"error": "Invalid token type. Use Bearer"}), 401
-        except ValueError:
-            return jsonify({"error": "Invalid authorization header format"}), 401
-        
-        if token != ACCESS_TOKEN:
-            return jsonify({"error": "Invalid access token"}), 401
-        
-        return f(*args, **kwargs)
-    return decorated_function
 
 # Ensure static directory exists
 os.makedirs('static', exist_ok=True)
@@ -47,11 +20,10 @@ def generate_text():
 
 @app.route("/", methods=["GET"])
 def index():
-    """Serve the main HTML page - no token required for the page itself"""
+    """Serve the main HTML page"""
     return render_template('index.html')
 
 @app.route("/captcha", methods=["GET"])
-@require_token  # Protect this route
 def captcha():
     global CURRENT_CAPTCHA
     CURRENT_CAPTCHA = generate_text()
@@ -74,7 +46,6 @@ def captcha():
     })
 
 @app.route("/verify", methods=["POST", "OPTIONS"])
-@require_token  # Protect this route
 def verify():
     if request.method == "OPTIONS":
         return jsonify({}), 200
@@ -88,12 +59,10 @@ def verify():
         return jsonify({"status": "failed"})
 
 @app.route("/test", methods=["GET"])
-@require_token  # Protect this route
 def test():
-    return jsonify({"status": "Server is running with authentication!"})
+    return jsonify({"status": "Server is running!"})
 
 @app.route("/captcha-image", methods=["GET"])
-@require_token  # Protect this route
 def serve_captcha_image():
     captcha_path = os.path.join('static', 'captcha.png')
     if os.path.exists(captcha_path):

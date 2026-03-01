@@ -441,28 +441,6 @@
 </head>
 
 <body>
-    <!-- Token Modal -->
-    <div id="tokenModal" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border: 4px solid black; box-shadow: 10px 10px 0 #BF40BF; z-index: 9999;">
-        <h3>Enter Access Token</h3>
-        <input type="text" id="tokenInput" placeholder="Enter token" style="padding: 10px; width: 100%; margin: 10px 0; border: 2px solid black;">
-        <button onclick="submitToken()" style="background: #BF40BF; color: white; padding: 10px 20px; border: none; cursor: pointer;">Submit</button>
-    </div>
-
-    <!-- First script: Modal handler -->
-    <script>
-        function submitToken() {
-            const token = document.getElementById('tokenInput').value;
-            if(token) {
-                window.ACCESS_TOKEN = token;  // Set global variable
-                document.getElementById('tokenModal').style.display = 'none';
-                // Start the app
-                checkServerConnection();
-            } else {
-                alert("Please enter a token");
-            }
-        }
-    </script>
-
     <div id="serverStatus" class="server-status status-offline">
         ⚫ Checking server...
     </div>
@@ -496,23 +474,9 @@
         <div id="result"></div>
     </div>
 
-    <!-- Second script: Main app logic -->
     <script>
         const API_BASE_URL = window.location.origin;
-        
-        // Get token from global variable (set by modal)
-        
-        const ACCESS_TOKEN = "8f7a9d3c2b1e5a6d4f8c3b2a1e9d7c6b5a4f3e2d1c0b9a8"; // Hardcoded
-        
 
-        async function fetchWithAuth(url, options = {}) {
-            const headers = {
-                'Authorization': `Bearer ${ACCESS_TOKEN}`,
-                ...options.headers
-            };
-            return fetch(url, { ...options, headers });
-        }
-        
         // Check server connection
         async function checkServerConnection() {
             const statusEl = document.getElementById('serverStatus');
@@ -523,7 +487,7 @@
 
             try {
                 console.log('Checking server connection...');
-                const response = await fetchWithAuth(`${API_BASE_URL}/test`);
+                const response = await fetch(`${API_BASE_URL}/test`);
 
                 if (response.ok) {
                     const data = await response.json();
@@ -573,7 +537,7 @@
 
             try {
                 console.log('Verifying captcha:', value);
-                const response = await fetchWithAuth(`${API_BASE_URL}/verify`, {
+                const response = await fetch(`${API_BASE_URL}/verify`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ captcha: value })
@@ -617,7 +581,7 @@
 
             try {
                 console.log('Fetching new captcha...');
-                const response = await fetchWithAuth(`${API_BASE_URL}/captcha`);
+                const response = await fetch(`${API_BASE_URL}/captcha`);
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -649,6 +613,7 @@
             }
         });
 
+        window.onload = checkServerConnection;
     </script>
 </body>
 
