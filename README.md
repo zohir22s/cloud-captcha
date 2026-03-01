@@ -21,7 +21,7 @@ This web application generates and verifies CAPTCHA images to distinguish betwee
 - captcha library for image generation
 - Flask-CORS for cross-origin support
 
-## ⚙️ Installation
+##  Installation
 
 1. **Clone the repository**
    ```bash
