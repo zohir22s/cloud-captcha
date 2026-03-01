@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Captcha Cloud Lab</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Additional styles that complement style.css */
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 30px;
+            font-family: monospace;
+            font-size: 24px;
+            border-bottom: 4px solid #BF40BF;
+            display: inline-block;
+            padding-bottom: 10px;
+        }
+
+        .robot-img {
+            width: 150px;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .robot-img:hover {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .captcha-container {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 4px solid #000;
+            box-shadow: 5px 5px 0 #BF40BF;
+        }
+
+        #captcha_image {
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            background-color: white;
+            padding: 5px;
+            max-width: 100%;
+            height: auto;
+            transition: all 0.3s ease;
+        }
+
+        #captcha_image:hover {
+            transform: scale(1.02);
+            border-color: #BF40BF;
+        }
+
+        .button-group {
+            margin: 30px 0;
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        #result {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+            min-height: 30px;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+
+        .server-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 12px 20px;
+            border-radius: 500px;
+            font-size: 14px;
+            font-weight: bold;
+            background-color: white;
+            box-shadow: 5px 5px 0 #000;
+            border: 2px solid #000;
+            z-index: 1000;
+            font-family: monospace;
+            transition: all 0.3s ease;
+        }
+
+        .server-status:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 7px 7px 0 #BF40BF;
+        }
+
+        .status-online {
+            color: #4CAF50;
+        }
+
+        .status-offline {
+            color: #f44336;
+        }
+
+        .success-message {
+            color: #4CAF50;
+            background-color: #e8f5e8;
+            padding: 15px;
+            border-radius: 500px;
+            margin: 10px 0;
+            border: 2px solid #4CAF50;
+            box-shadow: 3px 3px 0 #000;
+            animation: glitch 0.3s ease;
+        }
+
+        .error-message {
+            color: #f44336;
+            background-color: #ffebee;
+            padding: 15px;
+            border-radius: 500px;
+            margin: 10px 0;
+            border: 2px solid #f44336;
+            box-shadow: 3px 3px 0 #000;
+            animation: glitch 0.3s ease;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #BF40BF;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+            filter: grayscale(50%);
+        }
+
+        button {
+            min-width: 140px;
+        }
+
+        .refresh-btn::before {
+            background:black;
+            color: #4a90e2;
+        }
+
+        .verify-btn::before {
+            background:black;
+            color: #4CAF50;
+        }
+
+        /* Responsive design */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            .button-group {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 100%;
+                max-width: 250px;
+            }
+            
+            .server-status {
+                position: static;
+                margin-bottom: 20px;
+                display: inline-block;
+            }
+        }
+    button {
+    outline: none;
+    cursor: pointer;
+    border: none;
+    padding: 0.9rem 2rem;
+    margin: 0;
+    font-family: inherit;
+    font-size: inherit;
+    position: relative;
+    display: inline-block;
+    letter-spacing: 0.05rem;
+    font-weight: 700;
+    font-size: 17px;
+    border-radius: 500px;
+    overflow: hidden;
+    background: #BF40BF;
+    color: ghostwhite;
+    }
+
+    button span {
+    position: relative;
+    z-index: 10;
+    transition: color 0.4s;
+    }
+
+    button:hover span {
+    color: black;
+    }
+
+    button::before,
+    button::after {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    }
+
+    button::before {
+    content: "";
+    background: #000;
+    width: 120%;
+    left: -10%;
+    transform: skew(30deg);
+    transition: transform 0.4s cubic-bezier(0.3, 1, 0.8, 1);
+    }
+
+    button:hover::before {
+    transform: translate3d(100%, 0, 0);
+    }
+
+
+
+    .brutalist-container {
+    position: relative;
+    width: 250px;
+    font-family: monospace;
+    display: grid;
+    place-items: center; 
+    margin: 0 auto;
+    }
+
+    .brutalist-input {
+    width: 100%;
+    padding: 15px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #000;
+    background-color: #fff;
+    border: 4px solid #000;
+    position: relative;
+    overflow: hidden;
+    border-radius: 0;
+    outline: none;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: 5px 5px 0 #000, 10px 10px 0 #4a90e2;
+    }
+
+    @keyframes glitch {
+    0% {
+        transform: translate(0);
+    }
+    20% {
+        transform: translate(-2px, 2px);
+    }
+    40% {
+        transform: translate(-2px, -2px);
+    }
+    60% {
+        transform: translate(2px, 2px);
+    }
+    80% {
+        transform: translate(2px, -2px);
+    }
+    100% {
+        transform: translate(0);
+    }
+    }
+
+    .brutalist-input:focus {
+    animation: focus-pulse 4s cubic-bezier(0.25, 0.8, 0.25, 1) infinite,
+        glitch 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) infinite;
+    }
+
+    .brutalist-input:focus::after {
+    content: "";
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: white;
+    z-index: -1;
+    }
+
+    .brutalist-input:focus::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: black;
+    z-index: -2;
+    clip-path: inset(0 100% 0 0);
+    animation: glitch-slice 4s steps(2, end) infinite;
+    }
+
+    @keyframes glitch-slice {
+    0% {
+        clip-path: inset(0 100% 0 0);
+    }
+    10% {
+        clip-path: inset(0 5% 0 0);
+    }
+    20% {
+        clip-path: inset(0 80% 0 0);
+    }
+    30% {
+        clip-path: inset(0 10% 0 0);
+    }
+    40% {
+        clip-path: inset(0 50% 0 0);
+    }
+    50% {
+        clip-path: inset(0 30% 0 0);
+    }
+    60% {
+        clip-path: inset(0 70% 0 0);
+    }
+    70% {
+        clip-path: inset(0 15% 0 0);
+    }
+    80% {
+        clip-path: inset(0 90% 0 0);
+    }
+    90% {
+        clip-path: inset(0 5% 0 0);
+    }
+    100% {
+        clip-path: inset(0 100% 0 0);
+    }
+    }
+
+    .brutalist-label {
+    position: absolute;
+    left: -3px;
+    top: -35px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #000;
+    padding: 5px 10px;
+    transform: rotate(-1deg);
+    z-index: 1;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    .brutalist-input:focus + .brutalist-label {
+    transform: rotate(0deg) scale(1.05);
+    background-color: #BF40BF;
+    }
+
+    .smooth-type {
+    position: relative;
+    overflow: hidden;
+    }
+
+    .smooth-type::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background: linear-gradient(90deg, #fff 0%, rgba(255, 255, 255, 0) 100%);
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    }
+
+    .smooth-type:focus::before {
+    opacity: 1;
+    animation: type-gradient 2s linear infinite;
+    }
+
+    @keyframes type-gradient {
+    0% {
+        background-position: 300px 0;
+    }
+    100% {
+        background-position: 0 0;
+    }
+    }
+
+    .brutalist-input::placeholder {
+    color: #888;
+    transition: color 0.3s ease;
+    }
+
+    .brutalist-input:focus::placeholder {
+    color: transparent;
+    }
+
+    .brutalist-input:focus {
+    animation: focus-pulse 4s cubic-bezier(0.25, 0.8, 0.25, 1) infinite;
+    }
+
+    @keyframes focus-pulse {
+    0%,
+    100% {
+        border-color: #000;
+    }
+    50% {
+        border-color: #BF40BF;
+    }
+    }
+
+    </style>
+</head>
+
+<body>
+    <div id="serverStatus" class="server-status status-offline">
+        ⚫ Checking server...
+    </div>
+
+    <div class="container">
+    
+        <img src="https://cdn-icons-png.flaticon.com/512/4712/4712027.png" class="robot-img" alt="Robot">
+        <br>
+        <h2>HUMAN VERIFICATION</h2>
+        <div class="captcha-container">
+            <img id="captcha_image" width="250" alt="Captcha image">
+        </div>
+        <div class="brutalist-container">
+            <input id="captcha_input" 
+                   class="brutalist-input smooth-type" 
+                   type="text" 
+                   placeholder="Enter captcha"
+                   autocomplete="off"
+                   disabled>
+            <label class="brutalist-label">CAPTCHA TEST</label>
+        </div>
+
+        <div class="button-group">
+            <button class="refresh-btn" onclick="refresh()" id="refreshBtn" disabled>
+                <span> REFRESH</span>
+            </button>
+            <button class="verify-btn" onclick="verify()" id="verifyBtn" disabled>
+                <span> VERIFY</span>
+            </button>
+        </div>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:5000';
+
+        // Check server connection on page load
+        async function checkServerConnection() {
+            const statusEl = document.getElementById('serverStatus');
+            const refreshBtn = document.getElementById('refreshBtn');
+            const verifyBtn = document.getElementById('verifyBtn');
+            const captchaInput = document.getElementById('captcha_input');
+            const resultEl = document.getElementById('result');
+
+            try {
+                console.log('Checking server connection...');
+                const response = await fetch(`${API_BASE_URL}/test`);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Server response:', data);
+
+                    statusEl.innerHTML = '🟢 SERVER: ONLINE';
+                    statusEl.className = 'server-status status-online';
+
+                    // Enable controls
+                    refreshBtn.disabled = false;
+                    verifyBtn.disabled = false;
+                    captchaInput.disabled = false;
+
+                    // Load first captcha
+                    refresh();
+                    return true;
+                } else {
+                    throw new Error(`Server returned ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Server connection error:', error);
+
+                statusEl.innerHTML = '🔴 SERVER: OFFLINE';
+                statusEl.className = 'server-status status-offline';
+
+                // Disable controls
+                refreshBtn.disabled = true;
+                verifyBtn.disabled = true;
+                captchaInput.disabled = true;
+
+                resultEl.innerHTML = '<div class="error-message">❌ CANNOT CONNECT TO SERVER<br><small>Make sure Flask is running on port 5000</small></div>';
+                return false;
+            }
+        }
+
+        // Verify captcha
+        async function verify() {
+            const input = document.getElementById("captcha_input");
+            const value = input.value.trim();
+
+            if (!value) {
+                // Use your styled button for alert? Can't easily style alert, so we'll show in result
+                document.getElementById("result").innerHTML = '<div class="error-message">❌ PLEASE ENTER CAPTCHA TEXT</div>';
+                return;
+            }
+
+            const verifyBtn = document.getElementById("verifyBtn");
+            const originalText = verifyBtn.innerHTML;
+            verifyBtn.innerHTML = '<span>⏳ VERIFYING...</span>';
+            verifyBtn.disabled = true;
+
+            try {
+                console.log('Verifying captcha:', value);
+                const response = await fetch(`${API_BASE_URL}/verify`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ captcha: value })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const result = document.getElementById("result");
+
+                if (data.status === "success") {
+                    result.innerHTML = '<div class="success-message">✅ VERIFICATION SUCCESSFUL!</div>';
+                    input.value = "";
+                    // Refresh after successful verification
+                    setTimeout(refresh, 1500);
+                } else {
+                    result.innerHTML = '<div class="error-message">❌ WRONG CAPTCHA. TRY AGAIN.</div>';
+                    refresh(); // Auto refresh new captcha if failed
+                }
+            } catch (error) {
+                console.error("Verification error:", error);
+                document.getElementById("result").innerHTML =
+                    '<div class="error-message">❌ ERROR CONNECTING TO SERVER</div>';
+                checkServerConnection(); // Recheck server connection
+            } finally {
+                verifyBtn.innerHTML = originalText;
+                verifyBtn.disabled = false;
+            }
+        }
+
+        // Refresh captcha
+        async function refresh() {
+            const img = document.getElementById("captcha_image");
+            const refreshBtn = document.getElementById("refreshBtn");
+            const originalText = refreshBtn.innerHTML;
+
+            // Show loading state
+            refreshBtn.innerHTML = '<span>⏳ LOADING...</span>';
+            refreshBtn.disabled = true;
+            img.style.opacity = '0.5';
+
+            try {
+                console.log('Fetching new captcha...');
+                const response = await fetch(`${API_BASE_URL}/captcha`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('Captcha text (for testing):', data.debug_text);
+
+                // Set the image
+                img.src = "data:image/png;base64," + data.image;
+
+                // Clear input and result
+                document.getElementById("captcha_input").value = "";
+                document.getElementById("result").innerHTML = "";
+
+            } catch (error) {
+                console.error("Refresh error:", error);
+                document.getElementById("result").innerHTML =
+                    '<div class="error-message">❌ FAILED TO LOAD CAPTCHA</div>';
+                img.src = ""; // Clear image
+            } finally {
+                refreshBtn.innerHTML = originalText;
+                refreshBtn.disabled = false;
+                img.style.opacity = '1';
+            }
+        }
+
+        // Allow Enter key to submit
+        document.getElementById('captcha_input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                verify();
+            }
+        });
+
+        // Check server connection when page loads
+        window.onload = checkServerConnection;
+    </script>
+</body>
+
+</html> 
